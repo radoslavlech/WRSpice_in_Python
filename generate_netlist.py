@@ -47,8 +47,10 @@ JJ_symbols = [f'bJ{i+1}' for i in range(N_JJ)]
 JJ_models = ['jj1' for i in range(N_JJ)]
 JJ_parameters = ['ics=400uA' for i in range(N_JJ)]
 
-nodes_to_simulate = [(nodes[0],nodes[1]) for nodes in JJ_nodes]
-nodes_to_simulate2 = [(nodes[2]) for nodes in JJ_nodes]
+nodes_to_simulate_V = [(nodes[0],nodes[1]) for nodes in JJ_nodes]
+nodes_to_simulate_jjV = [(nodes[2]) for nodes in JJ_nodes]
+nodes_to_simulate_I = [I_nodes[1]]
+
 sim_types = ['v']
 
 
@@ -68,12 +70,16 @@ with open(f'../interface.cir','w') as f:
         f.write(f"write {SIM_OUT_PATH}/{SIMULATION_TITLE}.csv ")
         # f.write(f"plot ")
         for type in sim_types:
-            for node in nodes_to_simulate:
+            for node in nodes_to_simulate_V:
                 f.write(f"{type}{node} ")
         
         f.write(f"\nwrite {SIM_OUT_PATH}/{SIMULATION_TITLE}_jj_voltage.csv ")
-        for node in nodes_to_simulate2:
+        for node in nodes_to_simulate_jjV:
                 f.write(f"v({node}) ")
+        
+        f.write(f"\nwrite {SIM_OUT_PATH}/{SIMULATION_TITLE}_currents.csv ")
+        for source in I_symbols:
+            f.write(f"source ")
 
         f.write(f"\nedit\n.endc\n")
         

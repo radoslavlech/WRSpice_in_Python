@@ -17,6 +17,11 @@ def find_node(idx,nodelist):
     for node in nodelist:
         if node.index == idx:
             return node
+        
+def find_device(sym,devicelist):
+    for dev in devicelist:
+        if dev.symbol == sym:
+            return dev
 
 def rotate(r0,vec,angle):
     theta = angle/360*2*np.pi
@@ -218,10 +223,7 @@ def draw_jj(ax,pos1,pos2):
 
 
 def draw_device(ax,pos1,pos2,type):
-    if type == 'josephson_junction':
-        draw_jj(ax,pos1,pos2)
-    else:
-        ax.plot([pos1[0],pos2[0]],[pos1[1],pos2[1]],color=LINECOLOR,lw=LINEWEIGHT)
+    ax.plot([pos1[0],pos2[0]],[pos1[1],pos2[1]],color=LINECOLOR,lw=LINEWEIGHT)
 
 def draw_scheleton(ax,chain,rot_angle,r0):
     delta = np.array([1.0, 0.0])

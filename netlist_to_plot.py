@@ -1,17 +1,22 @@
 import matplotlib.pyplot as plt
 import ast
 import matplotlib.patches as patches
+from parse_and_modify import parse_and_modify
 import numpy as np
 import pandas as pd
 from matplotlib import animation as anm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import random as r
 from functions import *
 from classes import *
-from parse_and_modify import parse_and_modify
+
 
 
 
 NETLIST = 'cell_example'
-SIM_FILE = f'sim_outputs/{NETLIST}.csv'
+V_SIM_FILE = f'sim_outputs/{NETLIST}.csv'
+V_JJ_FILE = f'sim_outputs/{NETLIST}_jj_voltage.csv'
+I_SIM_FILE = f'sim_outputs/{NETLIST}_currents.csv'
 
 inductances = []
 voltage_sources = []
@@ -123,6 +128,7 @@ with open(f'../{NETLIST}.cir') as netlist:
 
 
 
+colors_dict = {node.index: (r.randint(1,10)/10,r.randint(1,10)/10,r.randint(1,10)/10) for node in nodes}
 
 
 fig = plt.figure(figsize=(16, 9))
@@ -137,43 +143,89 @@ for junction_node in junction_nodes:
     junction_node.pos = (find_node(junction_node.between[0],nodes).pos+ find_node(junction_node.between[1],nodes).pos)/2
 assign_subbranches(devices)
 draw_by_device(ax,devices,nodes)
+nodes_dict = {node.index : node.pos for node in nodes}
+ax.axis('off')
+
 
 
 #ADDING ANIMATION
 
+
+
+
+
 #if necessary:
-# parse_and_modify(SIM_FILE)
+# parse_and_modify(V_SIM_FILE)
+# parse_and_modify(I_SIM_FILE)
 
-df = pd.read_csv(SIM_FILE,sep=';')
 
-columns = df.columns
-time_vec = np.array(df[columns[0]])
-Voltage_ev_mtx = df[columns[1:-1]]
+v_df = pd.read_csv(V_SIM_FILE,sep=';')
+i_df = pd.read_csv(I_SIM_FILE,sep=';')
+
+print(i_df)
+
+v_columns = v_df.columns
+i_columns = i_df.columns
+time_vec = np.array(v_df[v_columns[0]])
+dt=time_vec[1]-time_vec[0]
+
+Voltage_ev_mtx = v_df[v_columns[1:]]
 Voltage_ev_mtx = np.array(Voltage_ev_mtx)
 Voltage_ev_mtx = np.array(Voltage_ev_mtx)*5e3 #5e-3 the best for interface
-nodes_dict = {node.index : node.pos for node in nodes}
 
-interesting_pairs = [ast.literal_eval(col.replace('v','').replace('units=V',"").strip()) for col in columns[1:-1]]
+Current_ev_mtx = i_df[i_columns[1:]]
+Current_ev_mtx = np.array(Current_ev_mtx)
+Current_ev_mtx=Current_ev_mtx*1e2
+print(Current_ev_mtx)
 
-x_space = []
-for pair in interesting_pairs:
+voltage_interesting_pairs = [ast.literal_eval(col.replace('v','').replace('units=V',"").strip()) for col in v_columns[1:]]
+current_interesting_nodes = [col.replace('#branch','').replace('i(','').replace('units=A',"").replace(')','').strip() for col in i_columns[1:]]
+
+
+print(current_interesting_nodes)
+
+
+x_space_v = []
+for pair in voltage_interesting_pairs:
     if isinstance(pair, tuple):
-        x_space.append((nodes_dict[str(pair[0])][0] + nodes_dict[str(pair[1])][0])/2)
+        x_space_v.append((nodes_dict[str(pair[0])][0] + nodes_dict[str(pair[1])][0])/2)
     else:
-        x_space.append(nodes_dict[str(pair)][0])
+        x_space_v.append(nodes_dict[str(pair)][0])
 
+x_space_i = []
+for branch in current_interesting_nodes:
+    x_space_i.append(nodes_dict[find_device(branch,devices).fro][0])
+    ax.scatter(nodes_dict[find_device(branch,devices).fro][0],nodes_dict[find_device(branch,devices).fro][1],color=colors_dict[find_device(branch,devices).fro])
+
+
+
+
+
+
+offset =30
 def update_plot(nt):
-    voltage.set_data(x_space, Voltage_ev_mtx[nt,:])
-    return voltage, 
+    voltage.set_data(x_space_v, Voltage_ev_mtx[nt,:])
+    current1.set_data(time_vec[nt:nt+offset], Current_ev_mtx[nt:nt+offset,0])
+    current2.set_data(time_vec[nt:nt+offset], Current_ev_mtx[nt:nt+offset,1])
+    inset1.set_xlim(dt*(nt-offset/4),(nt+offset)*dt)
+    return  current1, voltage, current2,
 
 voltage, = ax.plot([],[],color='r')
 
+inset1 = inset_axes(ax, width="30%", height="30%", loc='upper left')
+insetjj = inset_axes(ax, width="30%", height="30%", loc='upper right')
+
+current1, = inset1.plot([],[],color=colors_dict[find_device(current_interesting_nodes[0],devices).fro],lw=1,label=f'i({find_device(current_interesting_nodes[0],devices).fro})')   
+current2, = inset1.plot([],[],color=colors_dict[find_device(current_interesting_nodes[1],devices).fro],lw=1,label=f'i({find_device(current_interesting_nodes[1],devices).fro})')
+
+jj_list=[]
+jj, = inset1.plot([],[],color=colors_dict[find_device(current_interesting_nodes[0],devices).fro],lw=1,label=f'i({find_device(current_interesting_nodes[0],devices).fro})')   
+jj_list.append(jj)
+print(jj_list)
+
 anim = anm.FuncAnimation(fig, update_plot, frames=len(time_vec), interval=20,repeat=True,blit=True)
 
-
+inset1.set_xlabel('time')
+inset1.legend()
 
 plt.show()
-
-
-
-
