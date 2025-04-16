@@ -77,9 +77,9 @@ with open(f'../interface.cir','w') as f:
         for node in nodes_to_simulate_jjV:
                 f.write(f"v({node}) ")
         
-        f.write(f"\nwrite {SIM_OUT_PATH}/{SIMULATION_TITLE}_currents.csv ")
-        for source in I_symbols:
-            f.write(f"source ")
+        # f.write(f"\nwrite {SIM_OUT_PATH}/{SIMULATION_TITLE}_currents.csv ")
+        # for source in I_symbols:
+        #     f.write(f"source ")
 
         f.write(f"\nedit\n.endc\n")
         

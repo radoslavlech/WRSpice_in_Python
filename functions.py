@@ -287,7 +287,7 @@ def assign_coords_and_draw(ax, nodes):
                     ax.text(link.pos[0]+0.1,link.pos[1]+0.1, link.index, ha='center')
 
     ax.set_aspect('equal')
-    ax.axis('off')
+    
 
     
 def draw_by_device(ax,devices,nodes):
