@@ -24,126 +24,30 @@ current_sources = []
 resistors = []
 capacitors = []
 josephson_junctions = []
-keywords = ['run', 'plot', 'edit','wrdata','write',' ']
-
 devices = []
 nodes = []
 junction_nodes = []
-with open(f'../{NETLIST}.cir') as netlist:
-    g_counter = 0
-    for line in netlist:
-        if line[0] in ['*','.']:
-            continue
-        else: 
-            first_space = line.find(' ')
-            second_space = line.find(' ',first_space+1)
-            third_space = line.find(' ',second_space+1)
-            device = line[:first_space]
-            if device and device not in keywords:
-                fro = line[first_space:second_space].replace(" ","")
-                to = line[second_space:third_space].replace(" ","")
-                
-                if fro=="0":
-                    fro = 'g'+str(g_counter)
-                    g_counter+=1
-                if to=="0":
-                    to = 'g'+str(g_counter)
-                    g_counter+=1
+all_symbols=[]
 
-                symbol = device 
-                if device[0]=='b':
-                    josephson_junctions.append(device)
-                    fourth_space = line.find(' ',third_space+1)
-                    device = JJ()
-                    device.type = 'josephson_junction'
-                    junction_node = line[third_space:fourth_space]
-                    device.junction_node = junction_node.strip()
-                    junction_node_idx = junction_node.strip()
-                    junction_node = Node()
-                    junction_node.index = junction_node_idx
-                    junction_node.between=(fro,to)
-                    nodes.append(junction_node)
-                    junction_nodes.append(junction_node)
-
-                elif device[0]=='I':
-                    current_sources.append(device)
-                    fourth_space = line.find(' ',third_space+1)
-                    device = Current_Source()
-                    current_type = line[third_space:fourth_space]
-                    device.type = "current_source"
-                    device.current_type = current_type
-                else:
-                    if device[0]=='L':
-                        inductances.append(device)
-                        device = Device()
-                        device.type = "inductance"
-                    elif device[0]=='V':
-                        voltage_sources.append(device)
-                        device = Device()
-                        device.type = "voltage_source"
-                    elif device[0]=='C':
-                        capacitors.append(device)
-                        device = Device()
-                        device.type = "capacitor"
-                    elif device[0]=='R':
-                        resistors.append(device)
-                        device = Device()
-                        device.type = "resistor"
-                device.symbol = symbol
-                device.fro = fro
-                device.to = to
-                devices.append(device)
-                fro_idx = fro
-                to_idx = to
- 
-                #1 checking if node with idx fro exists
-                #if YES add .to to it 
-                #if NOT create
-                if exists(fro_idx,nodes):
-                    fro = find_node(fro_idx,nodes)
-                    if exists(to_idx,nodes):
-                        to = find_node(to_idx,nodes)
-                        to.fro.append(fro)
-                        fro.to.append(to)
-                    else:
-                        to = Node()
-                        nodes.append(to)
-                        to.index = to_idx
-                        to.fro.append(fro)
-                        fro.to.append(to) 
-                else: 
-                    fro = Node()
-                    nodes.append(fro)
-                    fro.index = fro_idx
-                    if exists(to_idx,nodes):
-                        to = find_node(to_idx,nodes)
-                        to.fro.append(fro)
-                        fro.to.append(to)
-                    else:
-                        to = Node()
-                        nodes.append(to)
-                        to.index = to_idx
-                        to.fro.append(fro)
-                        fro.to.append(to) 
-
-
+get_devices_and_nodes(NETLIST,devices,nodes,junction_nodes,all_symbols,resistors,inductances,capacitors,current_sources,voltage_sources,josephson_junctions)
 
 colors_dict = {node.index: (r.randint(1,10)/10,r.randint(1,10)/10,r.randint(1,10)/10) for node in nodes}
 
-
 fig = plt.figure(figsize=(16, 9))
 ax = fig.add_subplot(111)
-y_min = -5
-y_max = 5
-ax.set_ylim(y_min,y_max)
+# y_min = -5
+# y_max = 5
+# ax.set_ylim(y_min,y_max)
 # x_min = 0
 # x_max = 60
 # ax.set_xlim(x_min,x_max)
 # ax.set_position([0.1, 0.1, 0.9, 0.9])
 chains = create_chains(ax,nodes)
 assign_coords_and_draw(ax,nodes)
+
 for junction_node in junction_nodes:
     junction_node.pos = (find_node(junction_node.between[0],nodes).pos+ find_node(junction_node.between[1],nodes).pos)/2
+
 assign_subbranches(devices)
 draw_by_device(ax,devices,nodes)
 nodes_dict = {node.index : node.pos for node in nodes}

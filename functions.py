@@ -1,10 +1,126 @@
 import matplotlib.pyplot as plt
+import re
 import matplotlib.patches as patches
 import numpy as np
+from classes import *
+
 
 LINECOLOR = 'black'
 LINEWEIGHT = 0.5
 NODESIZE = 0.5
+
+
+def get_devices_and_nodes(net_file,empty_dev_list,empty_nodes_list,empty_jj_nodes,empty_symbols,empty_r_list,empty_l_list,empty_c_list,empty_i_list,empty_v_list,empty_jj_list):
+
+    keywords = ['run', 'plot', 'edit','wrdata','write',' ']
+    with open(f'../{net_file}.cir') as netlist:
+        g_counter = 0
+        for line in netlist:
+            if line[0] in ['*','.']:
+                continue
+            else: 
+                first_space = line.find(' ')
+                second_space = line.find(' ',first_space+1)
+                third_space = line.find(' ',second_space+1)
+                device = line[:first_space]
+                if device and device not in keywords:
+                    fro = line[first_space:second_space].replace(" ","")
+                    to = line[second_space:third_space].replace(" ","")
+                    
+                    if fro=="0":
+                        fro = 'g'+str(g_counter)
+                        g_counter+=1
+                    if to=="0":
+                        to = 'g'+str(g_counter)
+                        g_counter+=1
+
+                    symbol = device
+                    while symbol in empty_symbols:
+                        match = re.match(r"(\D+)(\d+)", symbol)
+                        if match:
+                            chars, digs = match.groups()
+                            digs = int(digs)+1
+                            symbol = f"{chars}{digs}"
+                    empty_symbols.append(symbol)
+                
+
+                    if device[0]=='b':
+                        empty_jj_list.append(device)
+                        fourth_space = line.find(' ',third_space+1)
+                        device = JJ()
+                        device.type = 'josephson_junction'
+                        junction_node = line[third_space:fourth_space]
+                        device.junction_node = junction_node.strip()
+                        junction_node_idx = junction_node.strip()
+                        junction_node = Node()
+                        junction_node.index = junction_node_idx
+                        junction_node.between=(fro,to)
+                        empty_nodes_list.append(junction_node)
+                        empty_jj_nodes.append(junction_node)
+
+                    elif device[0]=='I':
+                        empty_i_list.append(device)
+                        fourth_space = line.find(' ',third_space+1)
+                        device = Current_Source()
+                        current_type = line[third_space:fourth_space]
+                        device.type = "current_source"
+                        device.current_type = current_type
+                    else:
+                        if device[0]=='L':
+                            empty_l_list.append(device)
+                            device = Device()
+                            device.type = "inductance"
+                        elif device[0]=='V':
+                            empty_v_list.append(device)
+                            device = Device()
+                            device.type = "voltage_source"
+                        elif device[0]=='C':
+                            empty_c_list.append(device)
+                            device = Device()
+                            device.type = "capacitor"
+                        elif device[0]=='R':
+                            empty_r_list.append(device)
+                            device = Device()
+                            device.type = "resistor"
+                    
+                    device.fro = fro
+                    device.to = to
+                    device.symbol = symbol
+                    
+
+                    empty_dev_list.append(device)
+                    fro_idx = fro
+                    to_idx = to
+    
+                    #1 checking if node with idx fro exists
+                    #if YES add .to to it 
+                    #if NOT create
+                    if exists(fro_idx,empty_nodes_list):
+                        fro = find_node(fro_idx,empty_nodes_list)
+                        if exists(to_idx,empty_nodes_list):
+                            to = find_node(to_idx,empty_nodes_list)
+                            to.fro.append(fro)
+                            fro.to.append(to)
+                        else:
+                            to = Node()
+                            empty_nodes_list.append(to)
+                            to.index = to_idx
+                            to.fro.append(fro)
+                            fro.to.append(to) 
+                    else: 
+                        fro = Node()
+                        empty_nodes_list.append(fro)
+                        fro.index = fro_idx
+                        if exists(to_idx,empty_nodes_list):
+                            to = find_node(to_idx,empty_nodes_list)
+                            to.fro.append(fro)
+                            fro.to.append(to)
+                        else:
+                            to = Node()
+                            empty_nodes_list.append(to)
+                            to.index = to_idx
+                            to.fro.append(fro)
+                            fro.to.append(to) 
 
 
 def exists(idx,nodelist):
@@ -223,6 +339,12 @@ def draw_jj(ax,pos1,pos2):
 
 
 def draw_device(ax,pos1,pos2,type):
+    dx = pos2[0] - pos1[0]
+    dy = pos2[1] - pos1[1]
+    length = np.hypot(dx, dy)
+    angle = np.degrees(np.arctan2(dy, dx))
+
+
     ax.plot([pos1[0],pos2[0]],[pos1[1],pos2[1]],color=LINECOLOR,lw=LINEWEIGHT)
 
 def draw_scheleton(ax,chain,rot_angle,r0):
@@ -313,5 +435,6 @@ def draw_by_device(ax,devices,nodes):
         ax.plot([inter2[0],pos2[0]],[inter2[1],pos2[1]],color=LINECOLOR,lw=LINEWEIGHT)
         ax.plot([inter1[0],one_end[0]],[inter1[1],one_end[1]],color=LINECOLOR,lw=LINEWEIGHT)
         ax.plot([other_end[0],inter2[0]],[other_end[1],inter2[1]],color=LINECOLOR,lw=LINEWEIGHT)
+
         draw_device(ax,one_end,other_end,device.type)
 

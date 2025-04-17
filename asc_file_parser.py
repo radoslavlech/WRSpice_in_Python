@@ -31,3 +31,8 @@ with open(f'../{ASC_FILE}') as netlist:
 
 ax.set_aspect('equal')
 plt.show()
+
+
+
+def add_asc_to_plot(ax,asc_file):
+    pass
