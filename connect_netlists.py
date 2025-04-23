@@ -22,6 +22,6 @@ def connect(*netlists):
 
 connect(N1,N2,N3)
 
-
+#NOW USE GENERATENETLIST() TO SPIT OUT THE FILE INTO WRSPICE
 
 
