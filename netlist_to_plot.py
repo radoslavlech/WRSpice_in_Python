@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import ast
 import matplotlib.patches as patches
-from parse_and_modify import parse_and_modify
 import numpy as np
 import pandas as pd
 from matplotlib import animation as anm
@@ -138,7 +137,6 @@ def update_plot(nt):
     inset1.set_xlim(dt*(nt-offset/4),(nt+offset)*dt)
 
     insetjj.set_xlim(dt*(nt-jj_offset/10),(nt+jj_offset)*dt)
-    
     
     return  voltage, current1,phase1, phase1_now, current1_now, current2,current2_now,
 

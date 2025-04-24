@@ -10,6 +10,101 @@ LINEWEIGHT = 0.5
 NODESIZE = 0.5
 
 
+
+
+def generate_netlist(filepath,config):
+    with open(filepath,'w') as f:
+        f.write(f"*{config['title']}\n")
+        if config['models']:
+            f.write("\n*Model definitions\n")
+            for i,model in config['model_names']:
+                f.write(".model " + f"{model} {config['model_types'][i]}\n")
+
+        if config['simulation']:
+            f.write(f"\n*Simulation\n")
+            f.write(f".control\nrun\n")
+            f.write(f"write {config['sim_out_path']}/{config['sim_title']}.csv ")
+            # f.write(f"plot ")
+            for type in config['sim_types']:
+                for node in config['nodes_to_simulate_V']:
+                    f.write(f"{type}{node} ")
+            
+            if config['nodes_to_simulate_jjV']:
+                f.write(f"\nwrite {SIM_OUT_PATH}/{config['sim_title']}_jj_voltage.csv ")
+                for node in config['nodes_to_simulate_jjV']:
+                        f.write(f"v({node}) ")
+            
+            # f.write(f"\nwrite {SIM_OUT_PATH}/{SIMULATION_TITLE}_currents.csv ")
+            # for source in I_symbols:
+            #     f.write(f"source ")
+            f.write(f"\nedit\n.endc\n")
+            
+        if config['resistors']:
+            f.write("\n*Resistances\n")
+            for i,resistor in enumerate(config['R_symbols']):
+                f.write(f"{resistor} {config['R_nodes'][i][0]} {config['R_nodes'][i][1]} {config['R_values'][i]}\n")
+        if config['inductances']:
+            f.write("*Inductances\n")
+            for i,induct in enumerate(config['L_symbols']):
+                f.write(f"{induct} {config['L_nodes'][i][0]} {config['L_nodes'][i][1]} {config['L_values'][i]}\n")
+        if config['capacitors']:
+            f.write("*Capacitances\n")
+            for i,capacitor in enumerate(config['C_symbols']):
+                f.write(f"{capacitor} {config['C_nodes'][i][0]} {config['C_nodes'][i][1]} {config['C_values'][i]}\n")
+
+        if config['current_sources']:
+            f.write("\n*Current sources (input and biases)\n")
+            for i,source in enumerate(config['I_symbols']):
+                f.write(f"{source} {config['I_nodes'][i][0]} {config['I_nodes'][i][1]} {config['I_types'][i]}\n")
+
+        if config['generators']:
+            f.write("\n*Generators\n")
+            for i,gen in enumerate(config['V_symbols']):
+                f.write(f"{gen} {config['V_nodes'][i][0]} {config['V_nodes'][i][1]} {config['V_types'][i]}\n")
+
+        if config['josephson_junctions']:
+            f.write("\n*Josephson junctions\n")
+            for i,jj in enumerate(config['JJ_symbols']):
+                f.write(f"{jj} {config['JJ_nodes'][i][0]} {config['JJ_nodes'][i][1]} {config['JJ_nodes'][i][2]} {config['JJ_models'][i]} {config['JJ_parameters'][i]}\n")
+        
+        if config['transient']:
+            f.write("\n*Transient analysis\n")
+            f.write(f".tran {config['timestep']} {config['duration']} {config['trans_conf']}\n")
+
+        f.write("\n.options maxdata=512000")
+        f.write("\n.end")
+
+def parse_and_modify(filepath):
+    with open(filepath,'r+') as f:
+        content = f.readlines()
+    
+    metadata = {}
+    with open(filepath, 'w') as f:
+        for line in content:
+            if line[0]=='#':
+                doubledot = line.find(':')
+                metadata[line[1:doubledot]]=line[doubledot+1:].strip()
+            elif line[0]=='"':
+                line = line.replace('","',';')
+                line = line.replace('"',"")
+                f.write(line)
+            else:
+                comma_ids = [match.start() for match in re.finditer(',', line)]
+                indices = [i for i in range(len(comma_ids)) if i%2==0]
+                comma_ids_new = []
+                for i in indices:
+                    comma_ids_new.append(comma_ids[i])
+            
+                for comma_idx in comma_ids_new:
+                    line_list = list(line)
+                    line_list[comma_idx] = '.'
+                    line = ''.join(line_list)
+                line = line.replace(",",";")
+                f.write(line)
+    return metadata
+
+
+
 def get_devices_and_nodes(net_file,empty_dev_list,empty_nodes_list,empty_jj_nodes,empty_symbols,empty_r_list,empty_l_list,empty_c_list,empty_i_list,empty_v_list,empty_jj_list):
 
     keywords = ['run', 'plot', 'edit','wrdata','write',' ']
