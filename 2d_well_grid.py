@@ -35,7 +35,7 @@ parameters ={
     'r_well2':7.5,
     'r0_well2': np.array([50,25]),
     'l1' : 1e-3,
-    'l': 1e-3,
+    'l': 5e-3,
     'c1': 1e-6
 }
 
@@ -71,7 +71,7 @@ netlist_config={
     'I_nodes' : [],
     'I_types' : [],
     'I_symbols' : [],
-    'V_nodes' : [(111111+1000*29+parameters['r0_well1'][1],0)],
+    'V_nodes' : [(111111+1000*28+parameters['r0_well1'][1],0)],
     'V_types' : [pwl_str],
     'V_symbols' : ['V_inp'],
     'JJ_nodes' : [],
@@ -174,7 +174,7 @@ parse_and_modify(V_SIM_FILE)
 fig2 = plt.figure()
 ax2=fig2.add_subplot(111)
 ax2.set_xlim(0,GRID_W)
-ax2.set_ylim(-1,1)
+ax2.set_ylim(-5,5)
 
 df = pd.read_csv(V_SIM_FILE,sep=';')
 columns = df.columns
