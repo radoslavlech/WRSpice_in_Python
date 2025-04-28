@@ -1,0 +1,66 @@
+*DFF_Schaltung_TUIL_FG_TET_EFQS_Zellbibliothek
+
+
+*Model definition
+.model jj1 jj(level=1, cap=5e-12, rn=0.7)
+
+*Simulation
+.control
+run
+write simulation.csv
+plot v(7,71) v(9,5) v(10) v(5,51) v(3,31) v(2,3) v(1) 
+*plot v(104) v(103) v(102) v(101) v(100) 
+
+plot i(Vdummy1) 
+edit
+.endc
+
+
+*Inductances
+L1 1 2 2.504pH
+L2 3 4 1.593pH
+L3 4 5 5.479pH
+L4 5 6 2.624pH
+L5 6 7 1.240pH
+L6 7 8 2.017pH
+L7 10 9 2.309pH
+
+Lp1 31 0 0.222pH
+Lp2 51 0 0.495pH
+Lp3 71 0 0.260pH  
+
+*Resitances for beta_c = 0.7
+RJ1 2 3 1.922
+RJ2 3 31 1.527
+RJ3 5 51 1.110
+RJ4 9 5 2.661
+RJ5 7 71 1.527
+R1 8 0  1
+
+*Josephson junctions
+bJ1 2 3 100 jj1 ics=175uA
+bJ2 3 31 101 jj1 ics=200uA
+bJ3 5 51 102 jj1 ics=250uA
+bJ4 9 5 103 jj1 ics=150uA
+bJ5 7 71 104 jj1 ics=200uA
+
+*Bias sources
+Ib1 0 4 DC 230uA
+Ib2 0 6 DC 135uA
+*Ib1 0 4 pulse(0 230uA 2ps 1ps 1ps 1000ps 0)
+*Ib2 0 6 pulse(0 135uA 2ps 1ps 1ps 1000ps 0)
+
+*Input pulse (voltage)
+* Vln 1 0 pulse(0 .1 50p 2p 3p 2p 0 152p)
+* Vclk 10 0 pulse(0 .1 20p 2p 1p 2p 0 152p)
+
+*Input pulse (current)
+Iln 0 nodeX pulse(0 0.1m 50p 1p 1p 10p 0 60p 120p 180p)
+Vdummy1 nodeX 1 0
+Iclk 0 nodeY pulse(0 0.1m 20p 1p 1p 10p 0 100p 200p 300p)
+Vdummy2 nodeY 10 0
+
+*Transient analysis
+.tran .5p 325ps uic
+
+.end

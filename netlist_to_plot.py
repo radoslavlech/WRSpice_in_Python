@@ -11,11 +11,10 @@ from classes import *
 
 
 
-
 NETLIST = 'cell_example'
-V_SIM_FILE = f'sim_outputs/{NETLIST}.csv'
-V_JJ_FILE = f'sim_outputs/{NETLIST}_jj_voltage.csv'
-I_SIM_FILE = f'sim_outputs/{NETLIST}_currents.csv'
+V_SIM_FILE = f'sim_outputs/{NETLIST}5.csv'
+V_JJ_FILE = f'sim_outputs/{NETLIST}_jj_voltage5.csv'
+I_SIM_FILE = f'sim_outputs/{NETLIST}_currents5.csv'
 
 inductances = []
 voltage_sources = []
@@ -63,7 +62,7 @@ ax.axis('off')
 #if necessary:
 # parse_and_modify(V_SIM_FILE)
 # parse_and_modify(I_SIM_FILE)
-# parse_and_modify(V_SIM_FILE)
+# parse_and_modify(V_JJ_FILE)
 CHOSEN_JJ_NODE = 2
 
 
@@ -82,7 +81,7 @@ dt=time_vec[1]-time_vec[0]
 
 Voltage_ev_mtx = v_df[v_columns[1:]]
 Voltage_ev_mtx = np.array(Voltage_ev_mtx)
-Voltage_ev_mtx = np.array(Voltage_ev_mtx)*5e2 #5e-3 the best for interface
+Voltage_ev_mtx = np.array(Voltage_ev_mtx)*5e3 #5e-3 the best for interface
 
 Current_ev_mtx = i_df[i_columns[1:]]
 Current_ev_mtx = np.array(Current_ev_mtx)
@@ -111,6 +110,7 @@ for pair in voltage_interesting_pairs:
 
 
 for branch in current_interesting_nodes:
+    print(branch)
     x_space_i.append(nodes_dict[find_device(branch,devices).fro][0])
     ax.scatter(nodes_dict[find_device(branch,devices).fro][0],nodes_dict[find_device(branch,devices).fro][1],color=colors_dict[find_device(branch,devices).fro])
 
@@ -157,10 +157,14 @@ i_y_max*=1.5
 
 inset1.set_ylim(i_y_min,i_y_max)
 inset1.vlines(0.0,i_y_min,i_y_max,linestyle='--',color='k',lw=0.5)
+inset1.set_title("Input currents")
 
 insetjj = inset_axes(ax, width="30%", height="30%", loc='upper right')
+insetjj.set_title("Phase response of a chosen JJ")
 jj_y_min = 0
-jj_y_max = 14
+jj_y_max = 100
+
+
 insetjj.set_ylim(jj_y_min,jj_y_max)
 insetjj.vlines(0.0,jj_y_min,jj_y_max,linestyle='--',color='k',lw=0.5)
 
@@ -177,4 +181,5 @@ anim = anm.FuncAnimation(fig, update_plot, frames=len(time_vec), interval=20,rep
 inset1.set_xlabel('time')
 inset1.legend()
 
+anim.save(f"gifs/{V_SIM_FILE.split('/')[1][:-4]}.gif", writer='pillow', fps=20)
 plt.show()

@@ -108,7 +108,7 @@ def parse_and_modify(filepath):
 def get_devices_and_nodes(net_file,empty_dev_list,empty_nodes_list,empty_jj_nodes,empty_symbols,empty_r_list,empty_l_list,empty_c_list,empty_i_list,empty_v_list,empty_jj_list):
 
     keywords = ['run', 'plot', 'edit','wrdata','write',' ']
-    with open(f'../{net_file}.cir') as netlist:
+    with open(f'{net_file}.cir') as netlist:
         g_counter = 0
         for line in netlist:
             if line[0] in ['*','.']:
@@ -433,14 +433,18 @@ def draw_jj(ax,pos1,pos2):
     ax.plot([stroke2_beg[0],stroke2_end[0]],[stroke2_beg[1],stroke2_end[1]],lw=LINEWEIGHT,color=LINECOLOR)
 
 
-def draw_device(ax,pos1,pos2,type):
+def draw_device(ax,pos1,pos2,symbol):
     dx = pos2[0] - pos1[0]
     dy = pos2[1] - pos1[1]
+    midpoint = (pos1+pos2)/2
+    midx = midpoint[0]
+    midy = midpoint[1]
+
     length = np.hypot(dx, dy)
     angle = np.degrees(np.arctan2(dy, dx))
 
-
     ax.plot([pos1[0],pos2[0]],[pos1[1],pos2[1]],color=LINECOLOR,lw=LINEWEIGHT)
+    ax.text(midx, midy, symbol, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.1'),ha='center')
 
 def draw_scheleton(ax,chain,rot_angle,r0):
     delta = np.array([1.0, 0.0])
@@ -512,6 +516,7 @@ def draw_by_device(ax,devices,nodes):
     for device in devices:
         pos1 = find_node(device.fro,nodes).pos
         pos2 = find_node(device.to,nodes).pos
+        symbol = device.symbol
         delta = pos2-pos1
         el_width = 0.24
         total_width = (device.no_subbranches-1)*el_width
@@ -531,5 +536,5 @@ def draw_by_device(ax,devices,nodes):
         ax.plot([inter1[0],one_end[0]],[inter1[1],one_end[1]],color=LINECOLOR,lw=LINEWEIGHT)
         ax.plot([other_end[0],inter2[0]],[other_end[1],inter2[1]],color=LINECOLOR,lw=LINEWEIGHT)
 
-        draw_device(ax,one_end,other_end,device.type)
+        draw_device(ax,one_end,other_end,symbol)
 
